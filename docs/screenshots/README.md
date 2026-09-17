@@ -9,9 +9,10 @@ stay in ignored `artifacts/`.
 | `viewer.png` | Viewer video and mixer; label synthetic video if used |
 | `application-audio.png` | Actual application list with Send/Mute/Volume; preferably CS2/Discord after acceptance |
 
-The existing Viewer smoke screenshot is idle UI, not a live call. Host and
-Application Audio need capture/review before illustrating a real target-app
-session. Missing files are not linked as images and no rows are fabricated.
+The included Host and Viewer screenshots show actual idle UI, not a live call.
+Host's selected 60 FPS is a request, not a measured rate. Application Audio still
+needs a real application-selection screenshot after target-app acceptance.
+Missing files are not linked as images and no rows are fabricated.
 
 Use a neutral desktop, collapse Developer/Raw SDP, exclude personal device names
 and notifications. Every visible control must match the actual running app.

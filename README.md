@@ -3,6 +3,7 @@
 ![Version](https://img.shields.io/badge/version-0.2.0--alpha-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64%20%7C%20Web-0078D4)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Checks and Windows build](https://github.com/Joy-114/PeerCast/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Joy-114/PeerCast/actions/workflows/ci.yml)
 
 **One-to-one screen sharing with independently controlled audio sources.**
 
@@ -37,6 +38,11 @@ media reliability and sustained 1080p60 remain **NEEDS MANUAL TEST**.
 The [screenshot guide](docs/screenshots/README.md) reserves Windows Host, Viewer
 and Application Audio views and identifies missing captures. Only reviewed images
 of actual application windows are included; no mockup is presented as a real call.
+
+![PeerCast Windows Host, idle quality controls](docs/screenshots/windows-host.png)
+
+*Actual Windows Host UI before sharing. 1080p / 60 FPS are selected requests,
+not measured capture performance.*
 
 ![PeerCast Windows Viewer, idle state](docs/screenshots/viewer.png)
 
@@ -185,8 +191,8 @@ isolated server for state introspection; desktop smoke uses production CSP.
 Synthetic video is not evidence of actual screen capture.
 
 [Testing and acceptance](docs/TESTING.md) provides hardware checklists. GitHub
-Actions runs base checks and Windows builds when pushed. No passing CI badge is
-shown before an actual remote run.
+Actions runs base checks and Windows builds when pushed. The badge reports the
+actual main-branch workflow status; hardware acceptance is excluded from CI.
 
 ## Known limitations
 

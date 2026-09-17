@@ -12,7 +12,7 @@ Local verification for the public alpha preparation, 2026-09-17:
 | `npm run test:desktop` | PASS | 15 production-CSP/IPC/settings assertions |
 | `npm run test:e2e` | PASS | 8 native-to-Viewer audio/lifecycle checks |
 | Public tree/history pattern scan | PASS | No matched credentials, local user paths or legacy machine address |
-| Public screenshots | PARTIAL | Reviewed idle Viewer included; Host capture failed with UnknownVizError; application view needs capture |
+| Public screenshots | NEEDS MANUAL TEST | Reviewed idle Host/Viewer included; target-application view still needs capture |
 | Actual target applications/network/60 FPS | NEEDS MANUAL TEST | See acceptance checklist |
 
 Build environment: Windows 11 x64 (build 26200), Node.js 22.23.2, .NET SDK
