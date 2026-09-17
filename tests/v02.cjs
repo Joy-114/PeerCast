@@ -1,0 +1,23 @@
+﻿'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const fields=new Map();const field=id=>{if(!fields.has(id))fields.set(id,{value:'',textContent:'',dataset:{},focus(){},select(){},setSelectionRange(start,end){this.selected=[start,end];}});return fields.get(id);};
+const store=new Map();const context=vm.createContext({console,setTimeout,clearTimeout,setInterval,clearInterval,Blob,CompressionStream,DecompressionStream,TextEncoder,TextDecoder,Uint8Array,atob,btoa,window:{},navigator:{platform:'MacIntel',clipboard:{writeText:async()=>{throw Error('denied');}}},document:{getElementById:field,execCommand:()=>false},localStorage:{getItem:key=>store.get(key),setItem:(key,value)=>store.set(key,value)}});
+for(const file of ['common.js','compact.js','settings.js','metrics.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context);
+(async()=>{
+ const value={type:'offer',sdp:'v=0\r\nm=video 9 UDP/TLS/RTP/SAVPF 96\r\n'+('a=candidate:1 1 udp 1 192.168.0.1 9999 typ host\r\n'.repeat(20)),peercast:{version:2,labels:{app_123:'游戏 🎮'},audio:{app_123:'2'}}};
+ const compact=await context.encodeDescription(value);assert.match(compact,/^PC1:[A-Za-z0-9_-]+$/);assert.equal(JSON.stringify(await context.decodeDescription(compact,'offer')),JSON.stringify(value));assert.ok(compact.length<JSON.stringify(value).length);
+ await assert.rejects(context.decodeDescription(compact,'answer'),/expected answer/);
+ await assert.rejects(context.decodeDescription('PC2:abc','offer'),/版本/);
+ await assert.rejects(context.decodeDescription(compact.slice(0,-7),'offer'),/校验/);
+ await assert.rejects(context.decodeDescription('PC1:a#','offer'),/无效/);
+ assert.equal((await context.decodeDescription(JSON.stringify(value),'offer')).type,'offer');
+ field('copy').value='PC1:abc';await context.copyDescription('copy');assert.match(field('message').textContent,/Command \+ C/);assert.equal(field('copy').selected[1],7);
+ context.navigator.platform='Win32';await context.copyDescription('copy');assert.match(field('message').textContent,/Ctrl \+ C/);
+ context.document.execCommand=()=>true;await context.copyDescription('copy');assert.match(field('message').textContent,/已复制/);
+ await vm.runInContext('settingsReady',context);const settings=vm.runInContext('PCSettings',context);assert.equal(settings.iceConfig().iceServers[0].urls,'stun:stun.l.google.com:19302');
+ await settings.save({...settings.value,resolution:'1080',fps:60,turn:'turn:example.test:3478',turnUser:'user',turnPassword:'credential',relayOnly:true});await settings.load();assert.equal(settings.value.fps,60);assert.equal(settings.iceConfig().iceTransportPolicy,'relay');assert.equal(settings.iceConfig().iceServers[1].credential,'credential');
+ assert.throws(()=>settings.validate({...settings.value,turn:'',relayOnly:true}),/TURN/);assert.throws(()=>settings.validate({...settings.value,stun:'https://bad'}),/STUN/);
+ assert.equal(context.connectionRoute({candidateType:'host',address:'192.168.1.2'},{candidateType:'host',address:'10.0.0.3'}),'LAN Direct P2P');assert.equal(context.connectionRoute({candidateType:'srflx'},{candidateType:'host'}),'Internet Direct P2P');assert.equal(context.connectionRoute({candidateType:'relay'},{candidateType:'srflx'}),'TURN Relay');assert.equal(context.connectionRoute(null,null),'Unknown');
+ field('resolution').value='1080';field('fps').value='60';assert.equal(context.captureConstraints().video.frameRate.ideal,60);assert.equal(context.captureConstraints().video.width.ideal,1920);
+ console.log(JSON.stringify({ok:true,raw:Buffer.byteLength(JSON.stringify(value)),compact:compact.length,tests:'Compact roundtrip, Unicode, corruption, type/version rejection, copy fallbacks, settings persistence, ICE/STUN/TURN, route classification, quality constraints'}));
+})().catch(error=>{console.error(error);process.exitCode=1;});

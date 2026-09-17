@@ -1,0 +1,31 @@
+﻿'use strict';
+const {app,BrowserWindow}=require('electron');const fs=require('node:fs'),os=require('node:os'),path=require('node:path');const {spawn}=require('node:child_process');
+fs.mkdirSync('artifacts',{recursive:true});
+app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'pc-e2e-')));app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');
+let host,viewer,tone;const results=[];const wait=ms=>new Promise(r=>setTimeout(r,ms));
+app.on('browser-window-created',(_,window)=>{if(!host)host=window;});require('../desktop/main.cjs');
+const check=(condition,name)=>{if(!condition)throw Error(name);results.push({test:name,status:'PASS'});};
+async function until(test,name){const start=Date.now();while(!await test()){if(Date.now()-start>18000)throw Error('timeout '+name);await wait(80);}}
+(async()=>{
+ await app.whenReady();await wait(700);await host.loadFile(path.resolve('host.html'));
+ const run=code=>host.webContents.executeJavaScript(code,true);
+ tone=spawn('powershell.exe',['-NoProfile','-ExecutionPolicy','Bypass','-File',path.resolve('tests/tone.ps1'),'-Frequency','440'],{windowsHide:true,stdio:['pipe','pipe','pipe']});await new Promise(r=>tone.stdout.once('data',r));await wait(500);
+ await run(`(async()=>{await settingsReady;PCSettings.value.stun='';await applicationAudio.refresh();})()`);
+ await run(`UI('app_${tone.pid}Send').click()`);await until(()=>run(`applicationAudio.entries.get('app_${tone.pid}')?.node && !UI('app_${tone.pid}Send').disabled`),'application capture');
+ check(await run(`UI('app_${tone.pid}Send').checked && !UI('screenSend').checked`),'native application Send starts and mixed System Audio is excluded');
+ await run(`selectDesktopScreen=async()=>true;Object.defineProperty(navigator.mediaDevices,'getDisplayMedia',{value:async()=>{const c=document.createElement('canvas');c.width=640;c.height=360;const g=c.getContext('2d');g.fillStyle='#446bcc';g.fillRect(0,0,640,360);return c.captureStream(30);}});UI('shareBtn').click();`);
+ await until(()=>run("!UI('createOfferBtn').disabled"),'synthetic screen');await run("UI('createOfferBtn').click()");await until(()=>run("!!UI('offerText').value"),'compact offer');
+ const offer=await run("UI('offerText').value");check(offer.startsWith('PC1:'),'desktop exports compact SDP');
+ viewer=new BrowserWindow({show:false,webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});await viewer.loadFile(path.resolve('viewer.html'));const vr=code=>viewer.webContents.executeJavaScript(code,true);
+ await vr(`(async()=>{await settingsReady;PCSettings.value.stun='';UI('offerInput').value=${JSON.stringify(offer)};UI('createAnswerBtn').click();})()`);await until(()=>vr("!!UI('answerText').value"),'answer');const answer=await vr("UI('answerText').value");await run(`UI('answerInput').value=${JSON.stringify(answer)};UI('setAnswerBtn').click();`);
+ await until(()=>vr("viewerPc.connectionState==='connected'"),'connected');await until(()=>vr(`!!UI('app_${tone.pid}Audio')?.srcObject`),'application remote track');
+ await vr(`window.analysisContext=new AudioContext();window.analyser=analysisContext.createAnalyser();analyser.fftSize=2048;analysisContext.createMediaStreamSource(UI('app_${tone.pid}Audio').srcObject).connect(analyser);analysisContext.resume();window.rms=()=>{const d=new Float32Array(2048);analyser.getFloatTimeDomainData(d);return Math.sqrt(d.reduce((s,n)=>s+n*n,0)/d.length);};void 0;`);
+ await until(()=>vr('rms()>.005'),'native PCM through Worklet WebRTC to Viewer');check(true,'real native PCM reaches distinct Viewer application track');
+ await run(`UI('app_${tone.pid}Mute').click()`);await wait(800);check(await vr('rms()<.001'),'application Mute silences received source');await run(`UI('app_${tone.pid}Mute').click()`);
+ await run(`UI('app_${tone.pid}Send').click()`);await wait(500);check(await run(`audioSenders.get('app_${tone.pid}').sender.track===null`),'application Send OFF detaches sender');
+ await run(`UI('app_${tone.pid}Send').click()`);await until(()=>vr('rms()>.005'),'application resume');check(true,'application Send ON resumes without renegotiation');
+ tone.stdin.end('\n');await until(()=>run(`!UI('app_${tone.pid}Send').checked`),'application close');check(await run("hostPc.connectionState==='connected'"),'application exit releases capture without crashing video connection');
+ await run("resetHost()");await vr("resetViewer();analysisContext.close()");check(await run('audioRouter.context===null'),'desktop stop releases audio graph');
+ fs.writeFileSync('artifacts/desktop-e2e.json',JSON.stringify({ok:true,results},null,2));console.log(JSON.stringify({ok:true,results}));app.quit();
+})().catch(error=>{console.error(error);fs.writeFileSync('artifacts/desktop-e2e.json',JSON.stringify({ok:false,error:error.stack,results},null,2));app.exit(1);}).finally(()=>tone?.kill());
+setTimeout(()=>app.exit(2),60000).unref();

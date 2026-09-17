@@ -1,0 +1,76 @@
+{
+  "name": "peercast",
+  "version": "0.2.0-alpha",
+  "private": true,
+  "description": "PeerCast desktop screen sharing and independent application audio",
+  "author": "PeerCast Contributors",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node tests/check.cjs && node tests/v02.cjs && node tests/release.cjs",
+    "build:native": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-native.ps1",
+    "build": "npm run build:native && electron-builder --win nsis --x64",
+    "build:dir": "npm run build:native && electron-builder --dir --win --x64",
+    "test:browser": "node tests/run-browser.cjs",
+    "test:desktop": "electron tests/desktop-smoke.cjs",
+    "test:audio": "node tests/native.cjs",
+    "test:e2e": "electron tests/desktop-e2e.cjs"
+  },
+  "devDependencies": {
+    "electron": "44.4.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "org.peercast.desktop",
+    "productName": "PeerCast",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "*.html",
+      "*.js",
+      "*.css",
+      "desktop/**",
+      "package.json",
+      "README.md",
+      "LICENSE",
+      "THIRD_PARTY_NOTICES.md"
+    ],
+    "extraResources": [
+      {
+        "from": "native/PeerCast.Audio/bin/Release/net8.0/win-x64/publish",
+        "to": "native",
+        "filter": [
+          "**/*",
+          "!**/*.pdb"
+        ]
+      },
+      {
+        "from": "desktop/notices",
+        "to": "notices"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "desktop/icon.ico",
+      "signExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": false,
+      "runAfterFinish": true,
+      "artifactName": "PeerCast-Setup-${version}.${ext}",
+      "include": "desktop/installer.nsh"
+    }
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "license": "MIT"
+}
