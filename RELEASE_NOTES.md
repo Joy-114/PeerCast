@@ -27,12 +27,17 @@ MSI, macOS/Linux installers and automatic updates are NOT IMPLEMENTED.
 
 Base checks, browser WebRTC regression, native audio isolation and desktop
 integration have local PASS evidence described in [Testing](docs/TESTING.md).
-Fresh-clone and alpha packaging results are recorded in the local delivery report.
+Fresh-clone `npm ci`, `npm test` and `npm run build` all passed on Windows x64
+without an in-checkout SDK cache. See [Build verification](docs/BUILD_VERIFICATION.md).
 GitHub CI is not claimed as passed until its workflow actually runs.
 
 **NEEDS MANUAL TEST:** CS2/Discord exclusion on a separate Viewer, actual
 cross-network media and TURN, sustained 1080p60, Safari hardware, device changes
 and complete interactive installation/shortcut/uninstall acceptance.
+
+An earlier 0.2.0 local setup check did not find the Start Menu shortcut; the alpha
+interactive shortcut check remains outstanding. Do not treat build success as
+proof that every installer option has passed acceptance.
 
 Native audio tests use genuine WASAPI capture of synthetic processes; they do not
 claim the target-game acceptance test passed. STUN srflx gathering alone does not

@@ -70,9 +70,10 @@ data path, repository map and Electron/Tauri tradeoff.
 
 ## Windows installation
 
-Download **`PeerCast-Setup-0.2.0-alpha.exe`** from this repository's Releases page
-when published. Binaries are Release assets, never Git source files. If no Release
-is available, build from source below.
+Download **`PeerCast-Setup-0.2.0-alpha.exe`** from the
+[alpha release](https://github.com/Joy-114/PeerCast/releases/tag/v0.2.0-alpha).
+Binaries are Release assets, never Git source files. Alternatively, build from
+source below.
 
 1. Run the installer and choose a directory.
 2. Choose Desktop and Start Menu shortcuts.
@@ -135,10 +136,11 @@ exchange it through a trusted channel and never publish real codes or credential
 
 ## Build
 
-Use Windows 11 x64, **Node.js 22**, **.NET SDK 8** and Git. In a fresh clone or
-extracted source archive, run from the root:
+Use Windows 11 x64, **Node.js 22**, **.NET SDK 8** and Git:
 
 ```powershell
+git clone https://github.com/Joy-114/PeerCast.git
+cd PeerCast
 npm ci
 npm test
 npm run build
@@ -212,4 +214,4 @@ Future evaluation, not implemented features or delivery promises:
 
 [CONTRIBUTING](CONTRIBUTING.md) · [Release notes](RELEASE_NOTES.md) ·
 [Security/publication](docs/SECURITY.md) · [MIT License](LICENSE) ·
-[Third-party notices](THIRD_PARTY_NOTICES.md)
+[Third-party notices](THIRD_PARTY_NOTICES.md) · [Build verification](docs/BUILD_VERIFICATION.md)
